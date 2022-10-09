@@ -21,5 +21,6 @@ func UsernameUuid(w http.ResponseWriter, r *http.Request) {
 	}
 	defer resp.Body.Close()
 
+	w.WriteHeader(200)
 	io.Copy(w, resp.Body)
 }
