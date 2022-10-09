@@ -1,7 +1,7 @@
 {
   "headers": [
     {
-      "source": "/api/v1/.*",
+      "source": "/api/v1/(.*)",
       "headers": [
         {
           "key": "Cache-Control",
