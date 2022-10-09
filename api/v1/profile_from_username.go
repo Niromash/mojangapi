@@ -2,6 +2,7 @@ package v1
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 )
@@ -35,7 +36,7 @@ func ProfileFromUsername(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// req to https://sessionserver.mojang.com/session/minecraft/profile/uuid
-	resp, err = http.Get("https://sessionserver.mojang.com/session/minecraft/profile/" + p.Id)
+	resp, err = http.Get(fmt.Sprintf("https://sessionserver.mojang.com/session/minecraft/profile/%s?unsigned=false", p.Id))
 	if err != nil {
 		w.WriteHeader(500)
 		w.Write([]byte(err.Error()))
