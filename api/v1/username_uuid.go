@@ -23,6 +23,6 @@ func UsernameUuid(w http.ResponseWriter, r *http.Request) {
 	defer resp.Body.Close()
 
 	w.WriteHeader(200)
-	w.Header().Set("Cache-Control", fmt.Sprintf("max-age=0, s-max-age=%d", 60*5))
+	w.Header().Set("Cache-Control", fmt.Sprintf("max-age=0, s-max-age=%d", 86400))
 	io.Copy(w, resp.Body)
 }
