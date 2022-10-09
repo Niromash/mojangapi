@@ -20,9 +20,5 @@ func Profile(w http.ResponseWriter, r *http.Request) {
 	}
 	defer resp.Body.Close()
 
-	// copy headers from the resp to the resp
-	for k, v := range resp.Header {
-		w.Header()[k] = v
-	}
 	io.Copy(w, resp.Body)
 }
