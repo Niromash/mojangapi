@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func Handler(w http.ResponseWriter, r *http.Request) {
+func Ip(w http.ResponseWriter, r *http.Request) {
 	// req get to https://ipinfo.io/json
 	resp, err := http.Get("https://ipinfo.io/json")
 	if err != nil {
