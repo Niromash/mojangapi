@@ -1,15 +1,37 @@
 package v1
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 )
 
-type payload struct {
+type UsernameToUuidPayload struct {
 	Name string `json:"name"`
 	Id   string `json:"id"`
+}
+
+type ProfilePayload struct {
+	Id         string       `json:"id"`
+	Name       string       `json:"name"`
+	Properties []Properties `json:"properties"`
+	SkinUrl    string       `json:"skinUrl,omitempty"`
+}
+
+type Properties struct {
+	Name      string `json:"name"`
+	Value     string `json:"value"`
+	Signature string `json:"signature"`
+}
+
+type SkinPropertyValueDecoded struct {
+	Url string `json:"url"`
+}
+
+type ProfileResponse struct {
+	UsernameToUuidPayload
+	ProfilePayload
 }
 
 func ProfileFromUsername(w http.ResponseWriter, r *http.Request) {
@@ -28,21 +50,52 @@ func ProfileFromUsername(w http.ResponseWriter, r *http.Request) {
 	}
 	defer resp.Body.Close()
 
-	p := payload{}
-	if err = json.NewDecoder(resp.Body).Decode(&p); err != nil {
+	usernameToUuidPayload := UsernameToUuidPayload{}
+	if err = json.NewDecoder(resp.Body).Decode(&usernameToUuidPayload); err != nil {
 		w.WriteHeader(500)
 		w.Write([]byte(err.Error()))
 		return
 	}
 
 	// req to https://sessionserver.mojang.com/session/minecraft/profile/uuid
-	resp, err = http.Get(fmt.Sprintf("https://sessionserver.mojang.com/session/minecraft/profile/%s?unsigned=false", p.Id))
+	resp, err = http.Get(fmt.Sprintf("https://sessionserver.mojang.com/session/minecraft/profile/%s?unsigned=false", usernameToUuidPayload.Id))
 	if err != nil {
 		w.WriteHeader(500)
 		w.Write([]byte(err.Error()))
 		return
 	}
 	defer resp.Body.Close()
+	var profilePayload ProfilePayload
+	if err = json.NewDecoder(resp.Body).Decode(&profilePayload); err != nil {
+		w.WriteHeader(500)
+		w.Write([]byte(err.Error()))
+		return
+	}
 
-	io.Copy(w, resp.Body)
+	if len(profilePayload.Properties) > 0 {
+		decodedProperty, err := base64.StdEncoding.DecodeString(profilePayload.Properties[0].Value)
+		if err != nil {
+			w.WriteHeader(500)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		skinPropertyValueDecoded := SkinPropertyValueDecoded{}
+		if err = json.Unmarshal(decodedProperty, &skinPropertyValueDecoded); err != nil {
+			w.WriteHeader(500)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		profilePayload.SkinUrl = skinPropertyValueDecoded.Url
+	}
+
+	if err = json.NewEncoder(w).Encode(ProfileResponse{
+		usernameToUuidPayload,
+		profilePayload,
+	}); err != nil {
+		w.WriteHeader(500)
+		w.Write([]byte(err.Error()))
+		return
+	}
 }
