@@ -14,5 +14,7 @@ func Ip(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer resp.Body.Close()
+
+	w.WriteHeader(200)
 	io.Copy(w, resp.Body)
 }
