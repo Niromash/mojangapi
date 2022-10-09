@@ -37,6 +37,11 @@ func GetUuidFromUsername(username string, w http.ResponseWriter) string {
 		return ""
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode == 429 {
+		w.WriteHeader(429)
+		w.Write([]byte("Too many requests"))
+		return ""
+	}
 	if resp.StatusCode != 200 {
 		w.WriteHeader(404)
 		w.Write([]byte("User not found"))
@@ -61,6 +66,17 @@ func GetProfileFromUuid(uuid string, w http.ResponseWriter) *ProfilePayload {
 		return nil
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode == 429 {
+		w.WriteHeader(429)
+		w.Write([]byte("Too many requests"))
+		return nil
+	}
+	if resp.StatusCode != 200 {
+		w.WriteHeader(404)
+		w.Write([]byte("User not found"))
+		return nil
+	}
+
 	var profilePayload ProfilePayload
 	if err = json.NewDecoder(resp.Body).Decode(&profilePayload); err != nil {
 		w.WriteHeader(500)
