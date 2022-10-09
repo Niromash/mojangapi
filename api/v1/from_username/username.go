@@ -1,7 +1,6 @@
 package from_username
 
 import (
-	"io"
 	"net/http"
 )
 
@@ -12,15 +11,10 @@ func UsernameUuid(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// req to https://api.mojang.com/users/profiles/minecraft/username
-	resp, err := http.Get("https://api.mojang.com/users/profiles/minecraft/" + r.URL.Query().Get("username"))
-	if err != nil {
-		w.WriteHeader(500)
-		w.Write([]byte(err.Error()))
+	username := GetUuidFromUsername(r.URL.Query().Get("username"), w)
+	if username == "" { // if the uuid is empty, the error has already been handled
 		return
 	}
-	defer resp.Body.Close()
 
-	w.WriteHeader(200)
-	io.Copy(w, resp.Body)
+	w.Write([]byte(username))
 }
