@@ -14,12 +14,12 @@ func ProfileFromUsername(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	uuid := GetUuidFromUsername(r.URL.Query().Get("username"), w)
-	if uuid == "" { // if the uuid is empty, the error has already been handled
+	usernameToUuidPayload := GetUuidFromUsername(r.URL.Query().Get("username"), w)
+	if usernameToUuidPayload == nil { // if the uuid is empty, the error has already been handled
 		return
 	}
 
-	profileResponse := GetProfileFromUuid(uuid, w)
+	profileResponse := GetProfileFromUuid(usernameToUuidPayload.Id, w)
 
 	if err := json.NewEncoder(w).Encode(profileResponse); err != nil {
 		w.WriteHeader(500)
@@ -28,33 +28,33 @@ func ProfileFromUsername(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func GetUuidFromUsername(username string, w http.ResponseWriter) string {
+func GetUuidFromUsername(username string, w http.ResponseWriter) *UsernameToUuidPayload {
 	// req to https://api.mojang.com/users/profiles/minecraft/username
 	resp, err := http.Get("https://api.mojang.com/users/profiles/minecraft/" + username)
 	if err != nil {
 		w.WriteHeader(500)
 		w.Write([]byte(err.Error()))
-		return ""
+		return nil
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode == 429 {
 		w.WriteHeader(429)
 		w.Write([]byte("Too many requests"))
-		return ""
+		return nil
 	}
 	if resp.StatusCode != 200 {
 		w.WriteHeader(404)
 		w.Write([]byte("User not found"))
-		return ""
+		return nil
 	}
 
 	usernameToUuidPayload := UsernameToUuidPayload{}
 	if err = json.NewDecoder(resp.Body).Decode(&usernameToUuidPayload); err != nil {
 		w.WriteHeader(500)
 		w.Write([]byte(err.Error()))
-		return ""
+		return nil
 	}
-	return usernameToUuidPayload.Id
+	return &usernameToUuidPayload
 }
 
 func GetProfileFromUuid(uuid string, w http.ResponseWriter) *ProfilePayload {

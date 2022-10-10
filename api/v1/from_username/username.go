@@ -1,6 +1,7 @@
 package from_username
 
 import (
+	"encoding/json"
 	"net/http"
 )
 
@@ -11,10 +12,17 @@ func UsernameUuid(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	username := GetUuidFromUsername(r.URL.Query().Get("username"), w)
-	if username == "" { // if the uuid is empty, the error has already been handled
+	usernameToUuidPayload := GetUuidFromUsername(r.URL.Query().Get("username"), w)
+	if usernameToUuidPayload == nil { // if the uuid is empty, the error has already been handled
 		return
 	}
 
-	w.Write([]byte(username))
+	bytes, err := json.Marshal(usernameToUuidPayload)
+	if err != nil {
+		w.WriteHeader(500)
+		w.Write([]byte(err.Error()))
+		return
+	}
+
+	w.Write(bytes)
 }
